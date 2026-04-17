@@ -115,18 +115,34 @@ client.on('guildMemberAdd', async member => {
   } catch {}
 });
 
-// 🔥 KOMENDA /invites
+// 🔥 KOMENDY
 client.on('interactionCreate', async interaction => {
   if (!interaction.isChatInputCommand()) return;
 
+  // /invites
   if (interaction.commandName === 'invites') {
     const target = interaction.options.getUser('user') || interaction.user;
-
     const count = inviteCounts[target.id] || 0;
 
-    await interaction.reply({
+    return interaction.reply({
       content: `👤 ${target.tag} ma **${count}** zaproszeń`
     });
+  }
+
+  // /topinvites
+  if (interaction.commandName === 'topinvites') {
+    const sorted = Object.entries(inviteCounts)
+      .sort((a, b) => b[1] - a[1])
+      .slice(0, 10);
+
+    let text = "🏆 **Top Invite:**\n";
+
+    for (let i = 0; i < sorted.length; i++) {
+      const [userId, count] = sorted[i];
+      text += `${i + 1}. <@${userId}> — ${count}\n`;
+    }
+
+    return interaction.reply(text || "Brak danych");
   }
 });
 
