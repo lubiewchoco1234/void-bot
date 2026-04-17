@@ -119,7 +119,7 @@ if (!usedInvite || !usedInvite.inviter) {
   inviter = usedInvite.inviter;
 }
 
-  const inviter = usedInvite.inviter;
+  inviter = usedInvite.inviter;
 
   joinedBy[member.id] = inviter.id;
 
