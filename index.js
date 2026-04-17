@@ -124,8 +124,6 @@ if (!inviter) {
   return;
 }
 
-  inviter = usedInvite.inviter;
-
   joinedBy[member.id] = inviter.id;
 
   if (!inviteCounts[inviter.id]) inviteCounts[inviter.id] = 0;
