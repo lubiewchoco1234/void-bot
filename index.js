@@ -1,4 +1,9 @@
-const { Client, GatewayIntentBits } = require('discord.js');
+require('http').createServer((req, res) => {
+  res.write("Bot działa!");
+  res.end();
+}).listen(process.env.PORT || 3000);
+
+const { Client, GatewayIntentBits } = require('discord.js');const { Client, GatewayIntentBits } = require('discord.js');
 const fs = require('fs');
 
 const client = new Client({
