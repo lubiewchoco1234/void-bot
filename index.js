@@ -125,6 +125,14 @@ if (!usedInvite || !usedInvite.inviter) {
 
   if (!inviteCounts[inviter.id]) inviteCounts[inviter.id] = 0;
   inviteCounts[inviter.id]++;
+  try {
+  const inviterMember = await guild.members.fetch(inviter.id);
+
+  if (inviteCounts[inviter.id] === 5) {
+    const role = guild.roles.cache.find(r => r.name === "Promotor");
+    if (role) await inviterMember.roles.add(role);
+  }
+} catch {}
 
   console.log(`${inviter.tag} +1 invite (${inviteCounts[inviter.id]})`);
 
