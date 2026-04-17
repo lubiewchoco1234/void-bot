@@ -86,19 +86,42 @@ client.on('inviteCreate', async invite => {
 
 // 🔥 JOIN
 client.on('guildMemberAdd', async member => {
-    console.log("JOIN:", member.user.tag);
+  console.log("JOIN:", member.user.tag);
+
   const guild = member.guild;
 
-  await new Promise(res => setTimeout(res, 3000));
+  const oldInvites = invites[guild.id];
 
-const newInvites = await guild.invites.fetch();
-const oldInvites = invites[guild.id];
-  console.log("OLD INVITES EXIST?", !!oldInvites);
+  // ⏳ większy delay
+  await new Promise(res => setTimeout(res, 5000));
 
-if (!oldInvites) {
-  invites[guild.id] = newInvites;
-  return;
-}
+  const newInvites = await guild.invites.fetch();
+
+  // ⏳ drugi fetch (ważne!)
+  await new Promise(res => setTimeout(res, 2000));
+  const newerInvites = await guild.invites.fetch();
+
+  invites[guild.id] = newerInvites;
+
+  if (!oldInvites) return;
+
+  const usedInvite = newerInvites.find(inv => {
+    const oldUses = oldInvites.get(inv.code)?.uses || 0;
+    return inv.uses > oldUses;
+  });
+
+  if (!usedInvite || !usedInvite.inviter) {
+    console.log("Nie znaleziono invite");
+    return;
+  }
+
+  const inviter = usedInvite.inviter;
+
+  if (!inviteCounts[inviter.id]) inviteCounts[inviter.id] = 0;
+  inviteCounts[inviter.id]++;
+
+  console.log(`${inviter.tag} +1 invite (${inviteCounts[inviter.id]})`);
+});
 
 // DEBUG
 console.log("---- INVITES ----");
