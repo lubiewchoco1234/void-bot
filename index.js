@@ -44,6 +44,11 @@ client.on('guildMemberAdd', async member => {
   const newInvites = await guild.invites.fetch();
   const oldInvites = invites[guild.id];
 
+  if (!oldInvites) {
+  invites[guild.id] = newInvites;
+  return;
+}
+
   invites[guild.id] = newInvites;
 
   let usedInvite = null;
@@ -71,6 +76,13 @@ client.on('guildMemberAdd', async member => {
 
   // 🎯 RANGA
   const inviterMember = await guild.members.fetch(inviter.id);
+
+  let inviterMember;
+try {
+  inviterMember = await guild.members.fetch(inviter.id);
+} catch {
+  return;
+}
 
   if (inviteCounts[inviter.id] === 5) {
     const role = guild.roles.cache.find(r => r.name === "Promotor");
