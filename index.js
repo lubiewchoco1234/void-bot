@@ -1,3 +1,4 @@
+// 🌐 mini serwer dla Render (WAŻNE)
 require('http').createServer((req, res) => {
   res.write("Bot działa!");
   res.end();
@@ -18,31 +19,48 @@ const token = process.env.TOKEN;
 
 let invites = {};
 let inviteCounts = {};
+let joinedBy = {};
 
-// 📂 load zapisanych invite
-if (fs.existsSync('./invites.json')) {
-  inviteCounts = JSON.parse(fs.readFileSync('./invites.json'));
+// 📂 load danych
+if (fs.existsSync('./data.json')) {
+  const data = JSON.parse(fs.readFileSync('./data.json'));
+  inviteCounts = data.inviteCounts || {};
+  joinedBy = data.joinedBy || {};
 }
 
-// 🔥 READY + rejestracja komendy
+// 💾 save danych
+function saveData() {
+  fs.writeFileSync('./data.json', JSON.stringify({
+    inviteCounts,
+    joinedBy
+  }, null, 2));
+}
+
+// 🔥 READY
 client.on('clientReady', async () => {
   console.log(`Zalogowano jako ${client.user.tag}`);
 
-  // 📌 rejestracja komendy globalnej
-  await client.application.commands.create({
-    name: 'invites',
-    description: 'Sprawdź ile masz zaproszeń',
-    options: [
-      {
-        name: 'user',
-        description: 'Użytkownik',
-        type: 6, // USER
-        required: false
-      }
-    ]
-  });
+  // 🔥 rejestracja komend (PEWNA metoda)
+  await client.application.commands.set([
+    {
+      name: 'invites',
+      description: 'Sprawdź ile masz zaproszeń',
+      options: [
+        {
+          name: 'user',
+          description: 'Użytkownik',
+          type: 6,
+          required: false
+        }
+      ]
+    },
+    {
+      name: 'topinvites',
+      description: 'Top zaproszeń'
+    }
+  ]);
 
-  console.log("Komenda /invites zarejestrowana");
+  console.log("Komendy zarejestrowane");
 
   // cache invite
   for (const [guildId, guild] of client.guilds.cache) {
@@ -61,8 +79,6 @@ client.on('inviteCreate', async invite => {
 
 // 🔥 JOIN
 client.on('guildMemberAdd', async member => {
-  console.log("JOIN:", member.user.tag);
-
   const guild = member.guild;
 
   await new Promise(res => setTimeout(res, 1000));
@@ -90,19 +106,18 @@ client.on('guildMemberAdd', async member => {
 
   invites[guild.id] = newInvites;
 
-  if (!usedInvite || !usedInvite.inviter) {
-    console.log("Nie znaleziono invite");
-    return;
-  }
+  if (!usedInvite || !usedInvite.inviter) return;
 
   const inviter = usedInvite.inviter;
+
+  joinedBy[member.id] = inviter.id;
 
   if (!inviteCounts[inviter.id]) inviteCounts[inviter.id] = 0;
   inviteCounts[inviter.id]++;
 
-  console.log(`${inviter.tag} ma ${inviteCounts[inviter.id]} invite`);
+  console.log(`${inviter.tag} +1 invite (${inviteCounts[inviter.id]})`);
 
-  fs.writeFileSync('./invites.json', JSON.stringify(inviteCounts, null, 2));
+  saveData();
 
   // 🎯 RANGA
   try {
@@ -115,6 +130,20 @@ client.on('guildMemberAdd', async member => {
   } catch {}
 });
 
+// 🔥 LEAVE (odejmowanie)
+client.on('guildMemberRemove', member => {
+  const inviterId = joinedBy[member.id];
+
+  if (!inviterId) return;
+
+  if (inviteCounts[inviterId]) {
+    inviteCounts[inviterId]--;
+  }
+
+  delete joinedBy[member.id];
+  saveData();
+});
+
 // 🔥 KOMENDY
 client.on('interactionCreate', async interaction => {
   if (!interaction.isChatInputCommand()) return;
@@ -124,9 +153,7 @@ client.on('interactionCreate', async interaction => {
     const target = interaction.options.getUser('user') || interaction.user;
     const count = inviteCounts[target.id] || 0;
 
-    return interaction.reply({
-      content: `👤 ${target.tag} ma **${count}** zaproszeń`
-    });
+    return interaction.reply(`👤 ${target.tag} ma **${count}** zaproszeń`);
   }
 
   // /topinvites
