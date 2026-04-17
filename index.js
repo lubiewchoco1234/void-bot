@@ -92,7 +92,8 @@ client.on('guildMemberAdd', async member => {
   await new Promise(res => setTimeout(res, 1000));
 
 const newInvites = await guild.invites.fetch();
-const oldInvites = invites[guild.id]; // 👈 NAJPIERW TO
+const oldInvites = invites[guild.id];
+  console.log("OLD INVITES EXIST?", !!oldInvites);
 
 if (!oldInvites) {
   invites[guild.id] = newInvites;
