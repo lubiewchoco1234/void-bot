@@ -104,19 +104,24 @@ client.on('guildMemberAdd', async member => {
     const oldUses = oldInvites.get(inv.code)?.uses || 0;
     return inv.uses > oldUses;
   });
+  
+let inviter = null;
 
-let inviter;
-
-if (!usedInvite || !usedInvite.inviter) {
+if (usedInvite && usedInvite.inviter) {
+  inviter = usedInvite.inviter;
+} else {
   console.log("Fallback użyty");
 
   const fallback = newerInvites.first();
 
-  if (!fallback || !fallback.inviter) return;
+  if (fallback && fallback.inviter) {
+    inviter = fallback.inviter;
+  }
+}
 
-  inviter = fallback.inviter;
-} else {
-  inviter = usedInvite.inviter;
+if (!inviter) {
+  console.log("Nie udało się znaleźć invitera");
+  return;
 }
 
   inviter = usedInvite.inviter;
