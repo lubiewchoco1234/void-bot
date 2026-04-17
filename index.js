@@ -75,7 +75,6 @@ client.on('guildMemberAdd', async member => {
   fs.writeFileSync('./invites.json', JSON.stringify(inviteCounts, null, 2));
 
   // 🎯 RANGA
-  const inviterMember = await guild.members.fetch(inviter.id);
 
   let inviterMember;
 try {
