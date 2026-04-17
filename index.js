@@ -38,6 +38,13 @@ function saveData() {
 
 // 🔥 READY
 client.on('clientReady', async () => {
+  console.log("CACHE INVITES START");
+
+for (const [guildId, guild] of client.guilds.cache) {
+  const guildInvites = await guild.invites.fetch();
+  console.log("Zapisano invite:", guildInvites.size);
+  invites[guildId] = guildInvites;
+}
   console.log(`Zalogowano jako ${client.user.tag}`);
 
   // 🔥 rejestracja komend (PEWNA metoda)
