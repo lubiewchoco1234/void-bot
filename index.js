@@ -79,6 +79,7 @@ client.on('inviteCreate', async invite => {
 
 // 🔥 JOIN
 client.on('guildMemberAdd', async member => {
+    console.log("JOIN:", member.user.tag);
   const guild = member.guild;
 
   await new Promise(res => setTimeout(res, 1000));
