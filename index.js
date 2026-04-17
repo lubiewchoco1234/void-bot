@@ -19,17 +19,21 @@ if (fs.existsSync('./invites.json')) {
   inviteCounts = JSON.parse(fs.readFileSync('./invites.json'));
 }
 
-// 🔥 READY (WAŻNE)
-client.on('ready', async () => {
+// 🔥 READY
+client.on('clientReady', async () => {
   console.log(`Zalogowano jako ${client.user.tag}`);
 
   for (const [guildId, guild] of client.guilds.cache) {
-    const guildInvites = await guild.invites.fetch();
-    invites[guildId] = guildInvites;
+    try {
+      const guildInvites = await guild.invites.fetch();
+      invites[guildId] = guildInvites;
+    } catch (err) {
+      console.log("Błąd pobierania invite:", err);
+    }
   }
 });
 
-// 🔥 NOWE INVITE (ważne!)
+// 🔥 NOWE INVITE
 client.on('inviteCreate', async invite => {
   const guildInvites = await invite.guild.invites.fetch();
   invites[invite.guild.id] = guildInvites;
@@ -41,27 +45,56 @@ client.on('guildMemberAdd', async member => {
 
   const guild = member.guild;
 
-  const newInvites = await guild.invites.fetch();
+  // ⏳ delay żeby Discord zdążył zaktualizować uses
+  await new Promise(res => setTimeout(res, 1000));
+
+  let newInvites;
+  try {
+    newInvites = await guild.invites.fetch();
+  } catch (err) {
+    console.log("Błąd fetch invite:", err);
+    return;
+  }
+
   const oldInvites = invites[guild.id];
 
   if (!oldInvites) {
-  invites[guild.id] = newInvites;
-  return;
-}
+    invites[guild.id] = newInvites;
+    console.log("Brak starych invite (restart bota?)");
+    return;
+  }
 
-  invites[guild.id] = newInvites;
+  // 🔍 DEBUG
+  console.log("---- INVITES ----");
+  newInvites.forEach(inv => {
+    const oldUses = oldInvites.get(inv.code)?.uses || 0;
+    console.log(inv.code, "OLD:", oldUses, "NEW:", inv.uses);
+  });
 
+  // 🔍 SZUKANIE INVITE (lepsza metoda)
   let usedInvite = null;
+  let maxDiff = 0;
 
   newInvites.forEach(inv => {
-    const oldUses = oldInvites?.get(inv.code)?.uses || 0;
-    if (inv.uses > oldUses) {
+    const oldUses = oldInvites.get(inv.code)?.uses || 0;
+    const diff = inv.uses - oldUses;
+
+    if (diff > maxDiff) {
+      maxDiff = diff;
       usedInvite = inv;
     }
   });
 
+  // update cache
+  invites[guild.id] = newInvites;
+
   if (!usedInvite) {
     console.log("Nie znaleziono invite");
+    return;
+  }
+
+  if (!usedInvite.inviter) {
+    console.log("Invite bez invitera (vanity?)");
     return;
   }
 
@@ -75,17 +108,20 @@ client.on('guildMemberAdd', async member => {
   fs.writeFileSync('./invites.json', JSON.stringify(inviteCounts, null, 2));
 
   // 🎯 RANGA
-
   let inviterMember;
-try {
-  inviterMember = await guild.members.fetch(inviter.id);
-} catch {
-  return;
-}
+  try {
+    inviterMember = await guild.members.fetch(inviter.id);
+  } catch {
+    console.log("Nie można pobrać membera");
+    return;
+  }
 
   if (inviteCounts[inviter.id] === 5) {
     const role = guild.roles.cache.find(r => r.name === "Promotor");
-    if (role) inviterMember.roles.add(role);
+    if (role) {
+      inviterMember.roles.add(role);
+      console.log("Nadano rangę Promotor");
+    }
   }
 });
 
