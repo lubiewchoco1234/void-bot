@@ -40,14 +40,16 @@ function saveData() {
 client.on('clientReady', async () => {
   console.log("CACHE INVITES START");
 
-for (const [guildId, guild] of client.guilds.cache) {
-  const guildInvites = await guild.invites.fetch();
-  console.log("Zapisano invite:", guildInvites.size);
-  invites[guildId] = guildInvites;
-}
+  for (const [guildId, guild] of client.guilds.cache) {
+    try {
+      const guildInvites = await guild.invites.fetch();
+      console.log("Zapisano invite:", guildInvites.size);
+      invites[guildId] = guildInvites;
+    } catch {}
+  }
+
   console.log(`Zalogowano jako ${client.user.tag}`);
 
-  // 🔥 rejestracja komend (PEWNA metoda)
   await client.application.commands.set([
     {
       name: 'invites',
@@ -68,14 +70,6 @@ for (const [guildId, guild] of client.guilds.cache) {
   ]);
 
   console.log("Komendy zarejestrowane");
-
-  // cache invite
-  for (const [guildId, guild] of client.guilds.cache) {
-    try {
-      const guildInvites = await guild.invites.fetch();
-      invites[guildId] = guildInvites;
-    } catch {}
-  }
 });
 
 // 🔥 NOWE INVITE
@@ -89,21 +83,22 @@ client.on('guildMemberAdd', async member => {
   console.log("JOIN:", member.user.tag);
 
   const guild = member.guild;
-
   const oldInvites = invites[guild.id];
 
-  // ⏳ większy delay
+  // ⏳ czekamy aż Discord zaktualizuje uses
   await new Promise(res => setTimeout(res, 5000));
 
   const newInvites = await guild.invites.fetch();
 
-  // ⏳ drugi fetch (ważne!)
   await new Promise(res => setTimeout(res, 2000));
   const newerInvites = await guild.invites.fetch();
 
   invites[guild.id] = newerInvites;
 
-  if (!oldInvites) return;
+  if (!oldInvites) {
+    console.log("Brak starych invite");
+    return;
+  }
 
   const usedInvite = newerInvites.find(inv => {
     const oldUses = oldInvites.get(inv.code)?.uses || 0;
@@ -114,36 +109,6 @@ client.on('guildMemberAdd', async member => {
     console.log("Nie znaleziono invite");
     return;
   }
-
-  const inviter = usedInvite.inviter;
-
-  if (!inviteCounts[inviter.id]) inviteCounts[inviter.id] = 0;
-  inviteCounts[inviter.id]++;
-
-  console.log(`${inviter.tag} +1 invite (${inviteCounts[inviter.id]})`);
-});
-
-// DEBUG
-console.log("---- INVITES ----");
-
-newInvites.forEach(inv => {
-  const oldUses = oldInvites.get(inv.code)?.uses || 0;
-  console.log(inv.code, "OLD:", oldUses, "NEW:", inv.uses);
-});
-
-  if (!oldInvites) {
-    invites[guild.id] = newInvites;
-    return;
-  }
-
-const usedInvite = newInvites.find(inv => {
-  const oldUses = oldInvites.get(inv.code)?.uses || 0;
-  return inv.uses > oldUses;
-});
-
-  invites[guild.id] = newInvites;
-
-  if (!usedInvite || !usedInvite.inviter) return;
 
   const inviter = usedInvite.inviter;
 
@@ -167,7 +132,7 @@ const usedInvite = newInvites.find(inv => {
   } catch {}
 });
 
-// 🔥 LEAVE (odejmowanie)
+// 🔥 LEAVE
 client.on('guildMemberRemove', member => {
   const inviterId = joinedBy[member.id];
 
@@ -185,7 +150,6 @@ client.on('guildMemberRemove', member => {
 client.on('interactionCreate', async interaction => {
   if (!interaction.isChatInputCommand()) return;
 
-  // /invites
   if (interaction.commandName === 'invites') {
     const target = interaction.options.getUser('user') || interaction.user;
     const count = inviteCounts[target.id] || 0;
@@ -193,7 +157,6 @@ client.on('interactionCreate', async interaction => {
     return interaction.reply(`👤 ${target.tag} ma **${count}** zaproszeń`);
   }
 
-  // /topinvites
   if (interaction.commandName === 'topinvites') {
     const sorted = Object.entries(inviteCounts)
       .sort((a, b) => b[1] - a[1])
