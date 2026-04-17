@@ -3,7 +3,7 @@ require('http').createServer((req, res) => {
   res.end();
 }).listen(process.env.PORT || 3000);
 
-const { Client, GatewayIntentBits } = require('discord.js');const { Client, GatewayIntentBits } = require('discord.js');
+const { Client, GatewayIntentBits } = require('discord.js');
 const fs = require('fs');
 
 const client = new Client({
