@@ -84,14 +84,21 @@ client.on('guildMemberAdd', async member => {
 
   await new Promise(res => setTimeout(res, 1000));
 
-  const newInvites = await guild.invites.fetch();
-  console.log("---- INVITES ----");
+const newInvites = await guild.invites.fetch();
+const oldInvites = invites[guild.id]; // 👈 NAJPIERW TO
+
+if (!oldInvites) {
+  invites[guild.id] = newInvites;
+  return;
+}
+
+// DEBUG
+console.log("---- INVITES ----");
 
 newInvites.forEach(inv => {
   const oldUses = oldInvites.get(inv.code)?.uses || 0;
   console.log(inv.code, "OLD:", oldUses, "NEW:", inv.uses);
 });
-  const oldInvites = invites[guild.id];
 
   if (!oldInvites) {
     invites[guild.id] = newInvites;
