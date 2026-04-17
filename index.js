@@ -89,7 +89,7 @@ client.on('guildMemberAdd', async member => {
     console.log("JOIN:", member.user.tag);
   const guild = member.guild;
 
-  await new Promise(res => setTimeout(res, 1000));
+  await new Promise(res => setTimeout(res, 3000));
 
 const newInvites = await guild.invites.fetch();
 const oldInvites = invites[guild.id];
