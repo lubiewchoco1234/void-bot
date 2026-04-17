@@ -113,18 +113,10 @@ newInvites.forEach(inv => {
     return;
   }
 
-  let usedInvite = null;
-  let maxDiff = 0;
-
-  newInvites.forEach(inv => {
-    const oldUses = oldInvites.get(inv.code)?.uses || 0;
-    const diff = inv.uses - oldUses;
-
-    if (diff > maxDiff) {
-      maxDiff = diff;
-      usedInvite = inv;
-    }
-  });
+const usedInvite = newInvites.find(inv => {
+  const oldUses = oldInvites.get(inv.code)?.uses || 0;
+  return inv.uses > oldUses;
+});
 
   invites[guild.id] = newInvites;
 
