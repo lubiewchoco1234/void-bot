@@ -1,3 +1,4 @@
+console.log("START BOTA");
 let recentJoins = new Set();
 
 // 🌐 mini serwer dla Render (WAŻNE)
@@ -207,3 +208,4 @@ client.on('interactionCreate', async interaction => {
     return interaction.editReply(text || "Brak danych");
   }
 });
+client.login(token);
