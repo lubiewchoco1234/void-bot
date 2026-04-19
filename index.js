@@ -1,3 +1,5 @@
+let recentJoins = new Set();
+
 // 🌐 mini serwer dla Render (WAŻNE)
 require('http').createServer((req, res) => {
   res.write("Bot działa!");
@@ -80,6 +82,13 @@ client.on('inviteCreate', async invite => {
 
 // 🔥 JOIN
 client.on('guildMemberAdd', async member => {
+  if (recentJoins.has(member.id)) return;
+recentJoins.add(member.id);
+
+setTimeout(() => {
+  recentJoins.delete(member.id);
+}, 10000);
+  
   console.log("JOIN:", member.user.tag);
 
   const guild = member.guild;
