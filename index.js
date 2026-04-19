@@ -121,7 +121,8 @@ if (usedInvite && usedInvite.inviter) {
 } else {
   console.log("Fallback użyty");
 
-  const fallback = newerInvites.first();
+const fallback = [...newerInvites.values()]
+  .sort((a, b) => b.uses - a.uses)[0];
 
   if (fallback && fallback.inviter) {
     inviter = fallback.inviter;
