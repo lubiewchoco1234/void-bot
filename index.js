@@ -187,17 +187,23 @@ client.on('interactionCreate', async interaction => {
     return interaction.reply(`👤 ${target.tag} ma **${count}** zaproszeń`);
   }
 
-  if (interaction.commandName === 'topinvites') {
-    const sorted = Object.entries(inviteCounts)
-      .sort((a, b) => b[1] - a[1])
-      .slice(0, 10);
+ if (interaction.commandName === 'topinvites') {
 
-    let text = "🏆 **Top Invite:**\n";
+  await interaction.deferReply();
 
-    for (let i = 0; i < sorted.length; i++) {
-      const [userId, count] = sorted[i];
-      text += `${i + 1}. <@${userId}> — ${count}\n`;
-    }
+  const sorted = Object.entries(inviteCounts)
+    .sort((a, b) => b[1] - a[1])
+    .slice(0, 10);
+
+  let text = "🏆 **Top Invite:**\n";
+
+  for (let i = 0; i < sorted.length; i++) {
+    const [userId, count] = sorted[i];
+    text += `${i + 1}. <@${userId}> — ${count}\n`;
+  }
+
+  return interaction.editReply(text || "Brak danych");
+}
 
     return interaction.reply(text || "Brak danych");
   }
